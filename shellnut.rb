@@ -3,7 +3,6 @@
 require "rubygems"
 require "IRC"
 require "mumble-ruby"
-require "pp"
 
 $LOAD_PATH.unshift File.expand_path './lib', File.dirname(__FILE__)
 
@@ -11,14 +10,7 @@ require "irc_colors"
 
 APP_CONFIG = YAML.load_file(File.expand_path("config.yml", File.dirname(__FILE__)))
 
-# Configure all clients globally
 Mumble.configure do |conf|
-  # sample rate of sound (48 khz recommended)
-  conf.sample_rate = 48000
-
-  # bitrate of sound (32 kbit/s recommended)
-  conf.bitrate = 32000
-
   # directory to store user's ssl certs
   conf.ssl_cert_opts[:cert_dir] = File.expand_path("./certs")
 end
@@ -28,7 +20,10 @@ mumble = Mumble::Client.new(APP_CONFIG['mumble']['server'], APP_CONFIG['mumble']
     conf.username = APP_CONFIG['mumble']['username']
 end
 
-irc = IRC.new(APP_CONFIG['irc']['nickname'], APP_CONFIG['irc']['server'], APP_CONFIG['irc']['port'], APP_CONFIG['irc']['realname'])
+irc = IRC.new(APP_CONFIG['irc']['nickname'], 
+              APP_CONFIG['irc']['server'], 
+              APP_CONFIG['irc']['port'], 
+              APP_CONFIG['irc']['realname'])
 
 def start(irc, mumble)
   @irc_thread ||= Thread.new do
@@ -37,10 +32,11 @@ def start(irc, mumble)
         irc.send_message(APP_CONFIG['irc']['channel'], "There are currently #{mumble.users.count} users connected to #{APP_CONFIG['mumble']['server']}")
         unless mumble.users.count == 0
           mumble.users.each do |user|
+            irc.send_message(APP_CONFIG['irc']['channel'], "\x02#{user[1].name.sub("\n", '')}\x02 in \x02#{mumble.channels[user[1].channel_id].name}\x02") 
           end
         end
       else
-        mumble.text_channel(APP_CONFIG['mumble']['channel'], "#{event.from}: #{event.message}".irc_colors)
+        mumble.text_channel(APP_CONFIG['mumble']['channel'], "<b>#{event.from}:</b> #{event.message}".irc_colors)
       end
     }
     IRCEvent.add_callback('endofmotd') { |event|
@@ -51,7 +47,7 @@ def start(irc, mumble)
 
   @mumble_thread ||= Thread.new do
     mumble.on_text_message do |msg|
-      mumble_msg = "#{mumble.users[msg.actor].name.sub("\n", '')}: #{msg.message}"
+      mumble_msg = "\x02#{mumble.users[msg.actor].name.sub("\n", '')}:\x02 #{msg.message}"
       irc.send_message(APP_CONFIG['irc']['channel'], mumble_msg)
     end
 

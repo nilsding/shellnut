@@ -2,8 +2,8 @@ irc:
   server: "server.iphere.com"
   port: "6667"
 
-  nickname: "Mumble-IRC"
-  realname: "Mumble-IRC Bridge"
+  nickname: "shellnut"
+  realname: "shellnut Mumble-to-IRC Bridge"
 
   channel: "#lobby"
 
@@ -11,6 +11,6 @@ mumble:
   server: "server.iphere.com"
   port: "64738"
 
-  username: "Mumble-IRC Bridge"
+  username: "shellnut"
 
   channel: "Lobby"
