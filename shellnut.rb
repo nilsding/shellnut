@@ -32,7 +32,7 @@ def start(irc, mumble)
         irc.send_message(APP_CONFIG['irc']['channel'], "There are currently #{mumble.users.count} users connected to #{APP_CONFIG['mumble']['server']}")
         unless mumble.users.count == 0
           mumble.users.each do |user|
-            irc.send_message(APP_CONFIG['irc']['channel'], "\x02#{user[1].name.sub("\n", '')}\x02 in \x02#{mumble.channels[user[1].channel_id].name}\x02") 
+            irc.send_message(APP_CONFIG['irc']['channel'], "\x02#{user[1].name.sub("\n", '')}\x02 in \x02#{mumble.channels[user[1].channel_id].name} #{"\0x34[muted]\0xf" if user[1].muted?}#{"\0x38[deafened]\0xf" if user[1].deafened?}\x02") 
           end
         end
       else
