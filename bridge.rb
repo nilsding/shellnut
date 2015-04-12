@@ -28,8 +28,9 @@ irc = IRC.new(APP_CONFIG['irc']['nickname'], APP_CONFIG['irc']['server'], APP_CO
 
 def start(irc, mumble)
   @irc_thread ||= Thread.new do
+    IRCEvent.add_callback('privmsg') { |event| mumble.text_channel(APP_CONFIG['mumble']['channel'], "#{event.from}: #{event.message}")}
+    IRCEvent.add_callback('endofmotd') { |event| irc.add_channel('#lobby') }
     irc.connect
-    IRCEvent.add_callback('endofmotd') { |event| irc.add_channel('#eris') }
   end
 
   @mumble_thread ||= Thread.new do
@@ -44,7 +45,8 @@ def start(irc, mumble)
     mumble.join_channel(APP_CONFIG['mumble']['channel'])
 
     mumble.on_text_message do |msg|
-      puts "#{mumble.users[msg.actor].name.sub("\n", '')}: #{msg.message}"
+      mumble_msg = "#{mumble.users[msg.actor].name.sub("\n", '')}: #{msg.message}"
+      irc.send_message(APP_CONFIG['irc']['channel'], mumble_msg)
     end
   end
 
