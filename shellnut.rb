@@ -29,10 +29,12 @@ def start(irc, mumble)
   @irc_thread ||= Thread.new do
     IRCEvent.add_callback('privmsg') { |event|
       if event.message.start_with? "!mumble"
-        irc.send_message(APP_CONFIG['irc']['channel'], "There are currently #{mumble.users.count} users connected to #{APP_CONFIG['mumble']['server']}")
+        irc.send_message(APP_CONFIG['irc']['channel'], "There are currently #{mumble.users.count - 1} users connected to #{APP_CONFIG['mumble']['server']}")
         unless mumble.users.count == 0
           mumble.users.each do |user|
-            irc.send_message(APP_CONFIG['irc']['channel'], "\x02#{user[1].name.sub("\n", '')}\x02 in \x02#{mumble.channels[user[1].channel_id].name} #{"\x034[muted]\x0f" if user[1].self_mute}#{"\x038[deafened]\x0f" if user[1].deafened?}\x02") 
+            unless user[1].name == APP_CONFIG['mumble']['username']
+              irc.send_message(APP_CONFIG['irc']['channel'], "\x02#{user[1].name.sub("\n", '')}\x02 in \x02#{mumble.channels[user[1].channel_id].name} #{"\x034[muted]\x0f" if user[1].self_mute}#{"\x038[deafened]\x0f" if user[1].deafened?}\x02") 
+            end
           end
         end
       else
