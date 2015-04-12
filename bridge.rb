@@ -25,29 +25,41 @@ mumble = Mumble::Client.new(APP_CONFIG['mumble']['server'], APP_CONFIG['mumble']
 end
 
 irc = IRC.new(APP_CONFIG['irc']['nickname'], APP_CONFIG['irc']['server'], APP_CONFIG['irc']['port'], APP_CONFIG['irc']['realname'])
-irc.connect
 
-mumble.connect
+def start(irc, mumble)
+  @irc_thread ||= Thread.new do
+    irc.connect
+    IRCEvent.add_callback('endofmotd') { |event| irc.add_channel('#eris') }
+  end
 
+  @mumble_thread ||= Thread.new do
+    mumble.connect
 
-IRCEvent.add_callback('endofmotd') { |event| bot.add_channel(APP_CONFIG['irc']['channel']) }
+    mumble.on_connected do
+      mumble.me.mute
+      mumble.me.deafen
+    end
 
-mumble.on_connected do
-    mumble.me.mute
-    mumble.me.deafen
+    sleep(2)
+    mumble.join_channel(APP_CONFIG['mumble']['channel'])
+
+    mumble.on_text_message do |msg|
+      puts "#{mumble.users[msg.actor].name.sub("\n", '')}: #{msg.message}"
+    end
+  end
+
+  @irc_thread.join
+  @mumble_thread.join
 end
+
+start(irc, mumble)
 
 sleep(2)
 pp mumble.users
 pp mumble.channels
-
-mumble.join_channel(APP_CONFIG['mumble']['channel'])
 puts "Joined channel '#{APP_CONFIG['mumble']['channel']}'"
 
-mumble.on_text_message do |msg|
-  puts "#{mumble.users[msg.actor].name.sub("\n", '')}: #{msg.message}"
-  irc.send_message(APP_CONFIG['irc']['channel'], "Hello #{event.from}")
-end
+
 
 puts "Press enter to terminate"
 gets
