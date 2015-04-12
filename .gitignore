@@ -1,0 +1,4 @@
+.directory
+config.yml
+Gemfile.lock
+certs/
