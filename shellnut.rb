@@ -8,7 +8,7 @@ $LOAD_PATH.unshift File.expand_path './lib', File.dirname(__FILE__)
 
 require "irc_colors"
 
-VERSION = "0.1.0"
+VERSION = "0.1.1"
 
 APP_CONFIG = YAML.load_file(File.expand_path("config.yml", File.dirname(__FILE__)))
 
@@ -47,7 +47,8 @@ def start(irc, mumble)
       elsif event.message.start_with? "+mumble"
         irc_msg = event.message
         irc_msg.slice! "+mumble"
-        unless irc_msg.length == 0
+        irc_msg.strip!
+        unless irc_msg.empty?
           mumble.text_channel(APP_CONFIG['mumble']['channel'], "<b>#{event.from}:</b>#{irc_msg}".irc_colors)
         end
       end
@@ -69,7 +70,8 @@ def start(irc, mumble)
       elsif msg.message.start_with? "+irc"
         mumble_msg = msg.message
         mumble_msg.slice! "+irc"
-        unless mumble_msg.length == 0
+        mumble_msg.strip!
+        unless mumble_msg.empty?
           irc.send_message(APP_CONFIG['irc']['channel'], "\x02#{mumble.users[msg.actor].name.sub("\n", '')}:\x02#{mumble_msg}")
         end
       end
