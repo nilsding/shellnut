@@ -14,3 +14,11 @@ mumble:
   username: "shellnut"
 
   channel: "Lobby"
+
+help:
+  - command: "+mumble"
+    description: "Send a message to the Mumble server (from IRC)"
+  - command: "+irc"
+    description: "Send a message to the IRC server (from Mumble)"
+  - command: "+users"
+    description: "Show a list of all users connected to the Mumble server"

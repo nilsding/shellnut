@@ -8,6 +8,8 @@ $LOAD_PATH.unshift File.expand_path './lib', File.dirname(__FILE__)
 
 require "irc_colors"
 
+VERSION = "0.1.0"
+
 APP_CONFIG = YAML.load_file(File.expand_path("config.yml", File.dirname(__FILE__)))
 
 Mumble.configure do |conf|
@@ -28,7 +30,7 @@ irc = IRC.new(APP_CONFIG['irc']['nickname'],
 def start(irc, mumble)
   @irc_thread ||= Thread.new do
     IRCEvent.add_callback('privmsg') { |event|
-      if event.message.start_with? "!mumble"
+      if event.message.start_with? "+users"
         irc.send_message(APP_CONFIG['irc']['channel'], "There are currently #{mumble.users.count - 1} users connected to #{APP_CONFIG['mumble']['server']}")
         unless mumble.users.count == 0
           mumble.users.each do |user|
@@ -37,8 +39,17 @@ def start(irc, mumble)
             end
           end
         end
-      else
-        mumble.text_channel(APP_CONFIG['mumble']['channel'], "<b>#{event.from}:</b> #{event.message}".irc_colors)
+      elsif event.message.start_with? "+help"
+        irc.send_message(APP_CONFIG['irc']['channel'], "shellnut v#{VERSION} - available commands:")
+        APP_CONFIG['help'].each do |cmd|
+          irc.send_message(APP_CONFIG['irc']['channel'], "\x02#{cmd['command']}\x02 - #{cmd['description']}")
+        end
+      elsif event.message.start_with? "+mumble"
+        irc_msg = event.message
+        irc_msg.slice! "+mumble"
+        unless irc_msg.length == 0
+          mumble.text_channel(APP_CONFIG['mumble']['channel'], "<b>#{event.from}:</b>#{irc_msg}".irc_colors)
+        end
       end
     }
     IRCEvent.add_callback('endofmotd') { |event|
@@ -49,8 +60,19 @@ def start(irc, mumble)
 
   @mumble_thread ||= Thread.new do
     mumble.on_text_message do |msg|
-      mumble_msg = "\x02#{mumble.users[msg.actor].name.sub("\n", '')}:\x02 #{msg.message}"
-      irc.send_message(APP_CONFIG['irc']['channel'], mumble_msg)
+      if msg.message.start_with? "+help"
+        help_msg = "shellnut v#{VERSION} - available commands:<br/>"
+        APP_CONFIG['help'].each do |cmd|
+          help_msg += "<b>#{cmd['command']}</b> - #{cmd['description']}<br/>"
+        end
+        mumble.text_channel(APP_CONFIG['mumble']['channel'], help_msg)
+      elsif msg.message.start_with? "+irc"
+        mumble_msg = msg.message
+        mumble_msg.slice! "+irc"
+        unless mumble_msg.length == 0
+          irc.send_message(APP_CONFIG['irc']['channel'], "\x02#{mumble.users[msg.actor].name.sub("\n", '')}:\x02#{mumble_msg}")
+        end
+      end
     end
 
     mumble.connect
