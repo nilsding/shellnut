@@ -12,6 +12,8 @@ VERSION = "0.1.2"
 
 APP_CONFIG = YAML.load_file(File.expand_path("config.yml", File.dirname(__FILE__)))
 
+$irc_users = []
+
 Mumble.configure do |conf|
   # directory to store user's ssl certs
   conf.ssl_cert_opts[:cert_dir] = File.expand_path("./certs")
@@ -22,20 +24,37 @@ mumble = Mumble::Client.new(APP_CONFIG['mumble']['server'], APP_CONFIG['mumble']
     conf.username = APP_CONFIG['mumble']['username']
 end
 
-irc = IRC.new(APP_CONFIG['irc']['nickname'], 
-              APP_CONFIG['irc']['server'], 
-              APP_CONFIG['irc']['port'], 
+irc = IRC.new(APP_CONFIG['irc']['nickname'],
+              APP_CONFIG['irc']['server'],
+              APP_CONFIG['irc']['port'],
               APP_CONFIG['irc']['realname'])
 
 def start(irc, mumble)
   @irc_thread ||= Thread.new do
+    IRCEvent.add_callback('whoreply') { |event|
+      unless event.stats[7] == APP_CONFIG['irc']['nickname']
+        realname = event.message
+        realname.slice! "0 "
+        $irc_users << {nickname: event.stats[7], realname: realname }
+      end
+    }
+    IRCEvent.add_callback('endofwho') { |event|
+      sleep(2)
+      user_msg = "There are currently #{$irc_users.count} users connected to #{APP_CONFIG['irc']['channel']} on #{APP_CONFIG['irc']['server']}<br/>"
+      $irc_users.each do |user|
+        user_msg += "<b>#{user[:nickname]}</b> (#{user[:realname]}) <br/>"
+      end
+      mumble.text_channel(APP_CONFIG['mumble']['channel'], user_msg)
+      user_msg = ""
+      $irc_users = []
+    }
     IRCEvent.add_callback('privmsg') { |event|
       if event.message.start_with? "+users"
         irc.send_message(APP_CONFIG['irc']['channel'], "There are currently #{mumble.users.count - 1} users connected to #{APP_CONFIG['mumble']['server']}")
         unless mumble.users.count == 0
           mumble.users.each do |user|
             unless user[1].name == APP_CONFIG['mumble']['username']
-              irc.send_message(APP_CONFIG['irc']['channel'], "\x02#{user[1].name.sub("\n", '')}\x02 in \x02#{mumble.channels[user[1].channel_id].name} #{"\x034[muted]\x0f" if user[1].self_mute}#{"\x038[deafened]\x0f" if user[1].deafened?}\x02") 
+              irc.send_message(APP_CONFIG['irc']['channel'], "\x02#{user[1].name.sub("\n", '')}\x02 in \x02#{mumble.channels[user[1].channel_id].name} #{"\x034[muted]\x0f" if user[1].self_mute}#{"\x038[deafened]\x0f" if user[1].deafened?}\x02")
             end
           end
         end
@@ -54,7 +73,7 @@ def start(irc, mumble)
       end
     }
     IRCEvent.add_callback('endofmotd') { |event|
-      irc.add_channel(APP_CONFIG['irc']['channel']) 
+      irc.add_channel(APP_CONFIG['irc']['channel'])
     }
     irc.connect
   end
@@ -74,6 +93,8 @@ def start(irc, mumble)
         unless mumble_msg.empty?
           irc.send_message(APP_CONFIG['irc']['channel'], "\x02#{mumble.users[msg.actor].name.sub("\n", '')}:\x02 #{mumble_msg}")
         end
+      elsif msg.message.start_with? "+users"
+        IRCConnection.send_to_server "WHO #{APP_CONFIG['irc']['channel']}"
       end
     end
 
