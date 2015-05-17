@@ -5,7 +5,9 @@ irc:
   nickname: "shellnut"
   realname: "shellnut Mumble-to-IRC Bridge"
 
-  channel: "#lobby"
+  channel:
+    - "#lobby"
+    - "#anotherchannel"
 
 mumble:
   server: "server.iphere.com"
