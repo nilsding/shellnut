@@ -8,7 +8,7 @@ $LOAD_PATH.unshift File.expand_path './lib', File.dirname(__FILE__)
 
 require "irc_colors"
 
-VERSION = "0.2.1"
+VERSION = "0.2.2"
 
 APP_CONFIG = YAML.load_file(File.expand_path("config.yml", File.dirname(__FILE__)))
 
@@ -53,7 +53,7 @@ def start(irc, mumble)
     }
     IRCEvent.add_callback('privmsg') { |event|
       if event.message.start_with? "+users"
-        irc.send_message(APP_CONFIG['irc']['channel'], "There are currently #{mumble.users.count - 1} users connected to #{APP_CONFIG['mumble']['server']}")
+        irc.send_message(event.channel, "There are currently #{mumble.users.count - 1} users connected to #{APP_CONFIG['mumble']['server']}")
         unless mumble.users.count == 0
           mumble.users.each do |user|
             unless user[1].name == APP_CONFIG['mumble']['username']
@@ -62,9 +62,9 @@ def start(irc, mumble)
           end
         end
       elsif event.message.start_with? "+help"
-        irc.send_message(APP_CONFIG['irc']['channel'], "shellnut v#{VERSION} - available commands:")
+        irc.send_message(event.channel, "shellnut v#{VERSION} - available commands:")
         APP_CONFIG['help'].each do |cmd|
-          irc.send_message(APP_CONFIG['irc']['channel'], "\x02#{cmd['command']}\x02 - #{cmd['description']}")
+          irc.send_message(event.channel, "\x02#{cmd['command']}\x02 - #{cmd['description']}")
         end
       elsif event.message.start_with? "+mumble"
         irc_msg = event.message
