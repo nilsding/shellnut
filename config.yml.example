@@ -17,6 +17,8 @@ mumble:
 
   channel: "Lobby"
 
+  announce_joins: yes
+
 help:
   - command: "+mumble"
     description: "Send a message to the Mumble server (from IRC)"
