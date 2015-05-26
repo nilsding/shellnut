@@ -121,6 +121,28 @@ def start(irc, mumble)
         end
       end
     end
+    
+    mumble.on_user_state do |state|
+      next unless state.include? "name"
+      next unless mumble.connected?
+      next unless APP_CONFIG['mumble']['announce_joins']
+      name = state['name'].gsub("\n", '')
+      puts "[Mumble] user #{name} connected"
+      APP_CONFIG['irc']['channel'].each do |channel|
+        irc.send_message(channel, "\x039[+]\x0F \x02#{name}\x0f connected to #{APP_CONFIG['mumble']['server']}")
+      end
+    end
+    
+    mumble.on_user_remove do |x|
+      next unless APP_CONFIG['mumble']['announce_joins']
+      user = mumble.users[x['session']]
+      next if user.nil?
+      name = user.name.gsub("\n", '')
+      puts "[Mumble] user #{name} disconnected"
+      APP_CONFIG['irc']['channel'].each do |channel|
+        irc.send_message(channel, "\x034[-]\x0F \x02#{name}\x0f disconnected from #{APP_CONFIG['mumble']['server']}")
+      end
+    end
 
     mumble.connect
     puts "[Mumble] Connected to server #{APP_CONFIG['mumble']['server']}"
@@ -140,3 +162,5 @@ def start(irc, mumble)
 end
 
 start(irc, mumble)
+
+# kate: indent-width 2
