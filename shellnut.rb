@@ -108,7 +108,7 @@ def start(irc, mumble)
           when 'help'
             help_msg = "shellnut v#{VERSION} - available commands:<br/>"
             APP_CONFIG['help'].each do |cmd|
-              help_msg += "<b>#{cmd['command']}</b> - #{cmd['description']}<br/>"
+              help_msg += "<b>#{prefix}#{cmd['command']}</b> - #{cmd['description']}<br/>"
             end
             mumble.text_channel(APP_CONFIG['mumble']['channel'], help_msg)
 
