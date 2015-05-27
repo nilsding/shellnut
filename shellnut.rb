@@ -91,16 +91,20 @@ def start(irc, mumble)
   @mumble_thread ||= Thread.new do
 
     mumble.on_text_message do |msg|
-
-      #ping ayy lmao
+      #Ping ayy lmao
       message = msg.message.gsub(/\s+/m, ' ').strip.split(" ")
-      #ping
+      #Ping
       command = message[0]
       #ayy lmao
       content = message.drop(1).join(" ")
-      prefix = APP_CONFIG['prefix']
+      #+
+      prefix_config = APP_CONFIG['prefix']
+      #+
+      prefix_current = command.slice!(0)
+      #ping
+      command = command.downcase
 
-      if command.slice!(0) == prefix
+      if prefix_current = prefix_config
         case command
           when 'ping'
             if content.nil? || content.empty?
