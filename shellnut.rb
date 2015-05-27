@@ -113,10 +113,7 @@ def start(irc, mumble)
             mumble.text_channel(APP_CONFIG['mumble']['channel'], help_msg)
 
           when 'irc'
-            mumble_msg = msg.message
-            mumble_msg.slice! "+irc"
-            mumble_msg.strip!
-            mumble_msg = mumble_msg.gsub(/\s+/m, ' ').split(" ")
+            mumble_msg = content.gsub(/\s+/m, ' ').split(" ")
             mumble_chl = mumble_msg[0]
             mumble_msg.delete_at(0)
             mumble_msg = mumble_msg.join " "
@@ -130,13 +127,10 @@ def start(irc, mumble)
             end
 
           when 'users'
-            mumble_chl = msg.message
-            mumble_chl.slice! "+users"
-            mumble_chl.strip!
-            if APP_CONFIG['irc']['channel'].include? mumble_chl
-              IRCConnection.send_to_server "WHO #{mumble_chl}"
+            if APP_CONFIG['irc']['channel'].include? content
+              IRCConnection.send_to_server "WHO #{content}"
             else
-              mumble.text_user(msg.actor, "Error: Invalid Channel")
+              mumble.text_user(msg.actor, "Error: Invalid Channel '#{content}'")
             end
         end
       end
