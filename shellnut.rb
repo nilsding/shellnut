@@ -91,8 +91,12 @@ def start(irc, mumble)
   @mumble_thread ||= Thread.new do
 
     mumble.on_text_message do |msg|
+
+      #ping ayy lmao
       message = msg.message.gsub(/\s+/m, ' ').strip.split(" ")
+      #ping
       command = message[0]
+      #ayy lmao
       content = message.drop(1).join(" ")
       prefix = APP_CONFIG['prefix']
 
