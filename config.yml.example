@@ -1,3 +1,4 @@
+prefix: "+"
 irc:
   server: "server.iphere.com"
   port: "6667"
