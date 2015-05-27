@@ -64,7 +64,7 @@ def start(irc, mumble)
       #+
       prefix_current = command.slice!(0)
       #ping (converted to lowercase)
-      command = command.downcase
+      command.downcase!
 
       if prefix_current = prefix_config
         case command
@@ -124,7 +124,7 @@ def start(irc, mumble)
       #+
       prefix_current = command.slice!(0)
       #ping (converted to lowercase)
-      command = command.downcase
+      command.downcase!
 
       if prefix_current = prefix_config
         case command
