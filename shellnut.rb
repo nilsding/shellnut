@@ -63,7 +63,7 @@ def start(irc, mumble)
       prefix_config = APP_CONFIG['prefix']
       #+
       prefix_current = command.slice!(0)
-      #ping
+      #ping (converted to lowercase)
       command = command.downcase
 
       if prefix_current = prefix_config
@@ -123,7 +123,7 @@ def start(irc, mumble)
       prefix_config = APP_CONFIG['prefix']
       #+
       prefix_current = command.slice!(0)
-      #ping
+      #ping (converted to lowercase)
       command = command.downcase
 
       if prefix_current = prefix_config
