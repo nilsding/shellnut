@@ -14,12 +14,13 @@ _Mumble-to-IRC/IRC-to-Mumble Chat Gateway_
 
 `ruby shellnut.rb`
 
-### Commands
+### Commands (prefix with the prefix you set in your config.yml)
 
-* `+help` will show a list of available commands
-* `+mumble` will send a message to the Mumble server set in the config *(from IRC)*
-* `+irc` will send a message to the IRC server set in the config *(from Mumble)*
-* `+users` will show a list of all online users on the Mumble and which channel they are in *(on IRC)*
+* `ping` will return "pong" or, if possible, return given arguments
+* `help` will show a list of available commands
+* `mumble` will send a message to the Mumble server set in the config *(from IRC)*
+* `irc` will send a message to the IRC server set in the config *(from Mumble)*
+* `users` will show a list of all online users on the Mumble and which channel they are in *(on IRC)*
 
 ## Thanks to
 

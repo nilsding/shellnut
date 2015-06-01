@@ -1,3 +1,4 @@
+prefix: "+"
 irc:
   server: "server.iphere.com"
   port: "6667"
@@ -20,9 +21,11 @@ mumble:
   announce_joins: yes
 
 help:
-  - command: "+mumble"
+  - command: "ping"
+    description: "Pong. Returns the message and 'pong' if empty"
+  - command: "mumble"
     description: "Send a message to the Mumble server (from IRC)"
-  - command: "+irc"
+  - command: "irc"
     description: "Send a message to the IRC server (from Mumble)"
-  - command: "+users"
+  - command: "users"
     description: "Show a list of all users connected to the Mumble server"
