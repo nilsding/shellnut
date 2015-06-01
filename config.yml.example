@@ -10,6 +10,9 @@ irc:
     - "#lobby"
     - "#anotherchannel"
 
+  announce_joins: yes
+  announce_nicks: yes
+
 mumble:
   server: "server.iphere.com"
   port: "64738"
@@ -21,8 +24,6 @@ mumble:
   announce_joins: yes
 
 help:
-  - command: "ping"
-    description: "Pong. Returns the message and 'pong' if empty"
   - command: "mumble"
     description: "Send a message to the Mumble server (from IRC)"
   - command: "irc"

@@ -8,7 +8,7 @@ $LOAD_PATH.unshift File.expand_path './lib', File.dirname(__FILE__)
 
 require "irc_colors"
 
-VERSION = "0.2.3"
+VERSION = "0.2.4"
 
 APP_CONFIG = YAML.load_file(File.expand_path("config.yml", File.dirname(__FILE__)))
 
@@ -52,30 +52,43 @@ def start(irc, mumble)
       $irc_users = []
       $irc_channel = ""
     }
+    IRCEvent.add_callback('join') { |event|
+      next unless APP_CONFIG['irc']['announce_joins']
+      unless event.from == APP_CONFIG['irc']['nickname']
+        puts "[IRC] #{event.from} joined #{event.channel}"
+        mumble.text_channel(APP_CONFIG['mumble']['channel'], "<b>#{event.from}</b> joined #{event.channel}")
+      end
+    }
+    IRCEvent.add_callback('part') { |event|
+      next unless APP_CONFIG['irc']['announce_joins']
+      unless event.from == APP_CONFIG['irc']['nickname']
+        puts "[IRC] #{event.from} left #{event.channel}"
+        mumble.text_channel(APP_CONFIG['mumble']['channel'], "<b>#{event.from}</b> left #{event.channel}")
+      end
+    }
+    IRCEvent.add_callback('quit') { |event|
+      next unless APP_CONFIG['irc']['announce_joins']
+      unless event.from == APP_CONFIG['irc']['nickname']
+        puts "[IRC] #{event.from} disconnected from the server"
+        mumble.text_channel(APP_CONFIG['mumble']['channel'], "<b>#{event.from}</b> disconnected from #{APP_CONFIG['irc']['server']}")
+      end
+    }
+    IRCEvent.add_callback('nick') { |event|
+      next unless APP_CONFIG['irc']['announce_nicks']
+      puts "[IRC] #{event.from} is now known as #{event.channel}"
+       mumble.text_channel(APP_CONFIG['mumble']['channel'], "<i>#{event.from}</i> is now known as <b>#{event.channel}</b>")
+    }
     IRCEvent.add_callback('privmsg') { |event|
-      #Ping ayy lmao
       message = event.message.gsub(/\s+/m, ' ').strip.split(" ")
-      #Ping
       command = message[0]
-      #ayy lmao
       content = message.drop(1).join(" ")
-      #+
       prefix_config = APP_CONFIG['prefix']
-      #+
       prefix_current = command.slice!(0)
-      #ping (converted to lowercase)
       command.downcase!
 
       if prefix_current = prefix_config
         case command
-        when 'ping'
-          if content.nil? || content.empty?
-            irc.send_message(event.channel, "pong")
-          else
-            irc.send_message(event.channel, content)
-        end
-
-        when 'users'
+          when 'users'
           irc.send_message(event.channel, "There are currently #{mumble.users.count - 1} users connected to #{APP_CONFIG['mumble']['server']}")
           unless mumble.users.count == 0
             mumble.users.each do |user|
@@ -83,19 +96,17 @@ def start(irc, mumble)
                 irc.send_message(event.channel, "\x02#{user[1].name.sub("\n", '')}\x02 in \x02#{mumble.channels[user[1].channel_id].name} #{"\x034[muted]\x0f" if user[1].self_mute}#{"\x038[deafened]\x0f" if user[1].deafened?}\x02")
               end
             end
-        end
-
-        when 'help'
-          irc.send_message(event.channel, "shellnut v#{VERSION} - available commands:")
-          APP_CONFIG['help'].each do |cmd|
-            irc.send_message(event.channel, "\x02#{prefix_config}#{cmd['command']}\x02 - #{cmd['description']}")
-        end
-
-        when 'mumble'
-          unless content.empty?
-            mumble.text_channel(APP_CONFIG['mumble']['channel'], "<b>#{event.from}(#{event.channel}):</b> #{content}".irc_colors)
-            puts "[IRC->Mumble] #{event.from}[#{event.channel}]: #{content}"
           end
+          when 'help'
+            irc.send_message(event.channel, "shellnut v#{VERSION} - available commands:")
+            APP_CONFIG['help'].each do |cmd|
+              irc.send_message(event.channel, "\x02#{prefix_config}#{cmd['command']}\x02 - #{cmd['description']}")
+            end
+          when 'mumble'
+            unless content.empty?
+              mumble.text_channel(APP_CONFIG['mumble']['channel'], "<b>#{event.from}(#{event.channel}):</b> #{content}".irc_colors)
+              puts "[IRC->Mumble] #{event.from}[#{event.channel}]: #{content}"
+            end
         end
       end
     }
@@ -113,35 +124,21 @@ def start(irc, mumble)
   @mumble_thread ||= Thread.new do
 
     mumble.on_text_message do |msg|
-      #Ping ayy lmao
       message = msg.message.gsub(/\s+/m, ' ').strip.split(" ")
-      #Ping
       command = message[0]
-      #ayy lmao
       content = message.drop(1).join(" ")
-      #+
       prefix_config = APP_CONFIG['prefix']
-      #+
       prefix_current = command.slice!(0)
-      #ping (converted to lowercase)
       command.downcase!
 
       if prefix_current = prefix_config
         case command
-          when 'ping'
-            if content.nil? || content.empty?
-              mumble.text_channel(APP_CONFIG['mumble']['channel'], "pong")
-            else
-              mumble.text_channel(APP_CONFIG['mumble']['channel'], content)
-          end
-
           when 'help'
             help_msg = "shellnut v#{VERSION} - available commands:<br/>"
             APP_CONFIG['help'].each do |cmd|
               help_msg += "<b>#{prefix_config}#{cmd['command']}</b> - #{cmd['description']}<br/>"
             end
             mumble.text_channel(APP_CONFIG['mumble']['channel'], help_msg)
-
           when 'irc'
             mumble_msg = content.gsub(/\s+/m, ' ').split(" ")
             mumble_chl = mumble_msg[0]
@@ -154,14 +151,13 @@ def start(irc, mumble)
               end
             else
               mumble.text_user(msg.actor, "Error: Invalid Channel")
-          end
-
+            end
           when 'users'
             if APP_CONFIG['irc']['channel'].include? content
               IRCConnection.send_to_server "WHO #{content}"
             else
               mumble.text_user(msg.actor, "Error: Invalid Channel '#{content}'")
-          end
+            end
         end
       end
     end
@@ -172,24 +168,22 @@ def start(irc, mumble)
       next unless mumble.connected?
       next unless APP_CONFIG['mumble']['announce_joins']
       name = state['name'].gsub("\n", '')
-      puts "[Mumble] user #{name} connected"
+      puts "[Mumble] #{name} connected"
       APP_CONFIG['irc']['channel'].each do |channel|
         irc.send_message(channel, "\x039[+]\x0F \x02#{name}\x0f connected to #{APP_CONFIG['mumble']['server']}")
       end
     end
-    #end of on_user_state
 
     mumble.on_user_remove do |x|
       next unless APP_CONFIG['mumble']['announce_joins']
       user = mumble.users[x['session']]
       next if user.nil?
       name = user.name.gsub("\n", '')
-      puts "[Mumble] user #{name} disconnected"
+      puts "[Mumble] #{name} disconnected"
       APP_CONFIG['irc']['channel'].each do |channel|
         irc.send_message(channel, "\x034[-]\x0F \x02#{name}\x0f disconnected from #{APP_CONFIG['mumble']['server']}")
       end
     end
-    #end of on_user_remove
 
     mumble.connect
     puts "[Mumble] Connected to server #{APP_CONFIG['mumble']['server']}"
@@ -209,5 +203,3 @@ def start(irc, mumble)
 end
 
 start(irc, mumble)
-
-# kate: indent-width 2
