@@ -81,6 +81,7 @@ def start(irc, mumble)
     IRCEvent.add_callback('privmsg') { |event|
       message = event.message.gsub(/\s+/m, ' ').strip.split(" ")
       command = message[0]
+      next if command.nil?
       content = message.drop(1).join(" ")
       prefix_config = APP_CONFIG['prefix']
       prefix_current = command.slice!(0)
