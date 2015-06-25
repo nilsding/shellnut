@@ -87,7 +87,7 @@ def start(irc, mumble)
       prefix_current = command.slice!(0)
       command.downcase!
 
-      if prefix_current = prefix_config
+      if prefix_current == prefix_config
         case command
           when 'users'
           irc.send_message(event.channel, "There are currently #{mumble.users.count - 1} users connected to #{APP_CONFIG['mumble']['server']}")
