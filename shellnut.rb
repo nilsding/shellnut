@@ -94,7 +94,12 @@ def start(irc, mumble)
           unless mumble.users.count == 0
             mumble.users.each do |user|
               unless user[1].name == APP_CONFIG['mumble']['username']
-                irc.send_message(event.channel, "\x02#{user[1].name.sub("\n", '')}\x02 in \x02#{mumble.channels[user[1].channel_id].name} #{"\x034[muted]\x0f" if user[1].self_mute}#{"\x038[deafened]\x0f" if user[1].deafened?}\x02")
+                channel_name = if mumble.channels[user[1].channel_id].nil?
+                                 "Server Root"
+                               else
+                                 mumble.channels[user[1].channel_id].name
+                               end
+                irc.send_message(event.channel, "\x02#{user[1].name.sub("\n", '')}\x02 in \x02#{channel_name} #{"\x034[muted]\x0f" if user[1].self_mute}#{"\x038[deafened]\x0f" if user[1].deafened?}\x02")
               end
             end
           end
@@ -132,7 +137,7 @@ def start(irc, mumble)
       prefix_current = command.slice!(0)
       command.downcase!
 
-      if prefix_current = prefix_config
+      if prefix_current == prefix_config
         case command
           when 'help'
             help_msg = "shellnut v#{VERSION} - available commands:<br/>"
