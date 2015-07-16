@@ -12,7 +12,7 @@ module Mumble
     # @param default_channel [String] The channel to join if there are no other users on the Mumble server.
     def join_channel_with_most_users(default_channel = APP_CONFIG['mumble']['channel'])
       # this is probably the best one-liner I've ever written in Ruby so far; and it even works!  --nilsding
-      chans_with_users = users.values.map{ |x| channels[x.channel_id] unless x == me}.compact.inject(Hash.new(0)){ |h, c| h[c] += 1; h }.sort_by{ |_k, v| v }.reverse
+      chans_with_users = users.values.map{ |x| channels[x.channel_id] unless x == me || x.muted? || x.deafened? }.compact.inject(Hash.new(0)){ |h, c| h[c] += 1; h }.sort_by{ |_k, v| v }.reverse
       if chans_with_users.empty?
         writeln! "[Mumble] Looks like we're alone, joining channel \033[1m#{default_channel}\033[0m."
         join_channel default_channel
