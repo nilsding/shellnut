@@ -7,6 +7,7 @@ require "mumble-ruby"
 $LOAD_PATH.unshift File.expand_path './lib', File.dirname(__FILE__)
 
 require "irc_colors"
+require "ext/mumble-ruby"
 
 VERSION = "0.2.4"
 
@@ -170,14 +171,22 @@ def start(irc, mumble)
     #end of on_text_message
 
     mumble.on_user_state do |state|
-      next unless state.include? "name"
       next unless mumble.connected?
-      next unless APP_CONFIG['mumble']['announce_joins']
-      name = state['name'].gsub("\n", '')
-      puts "[Mumble] #{name} connected"
-      APP_CONFIG['irc']['channel'].each do |channel|
-        irc.send_message(channel, "\x039[+]\x0F \x02#{name}\x0f connected to #{APP_CONFIG['mumble']['server']}")
+      next if mumble.users[state['actor']] == mumble.me
+      if state.include? "name"
+        next unless APP_CONFIG['mumble']['announce_joins']
+        name = state['name'].gsub("\n", '')
+        puts "[Mumble] #{name} connected"
+        APP_CONFIG['irc']['channel'].each do |channel|
+          irc.send_message(channel, "\x039[+]\x0F \x02#{name}\x0f connected to #{APP_CONFIG['mumble']['server']}")
+        end
       end
+    end
+    
+    mumble.after_user_state do |state|
+      next unless mumble.connected?
+      next if mumble.users[state['actor']] == mumble.me
+      mumble.join_channel_with_most_users
     end
 
     mumble.on_user_remove do |x|
@@ -190,18 +199,22 @@ def start(irc, mumble)
         irc.send_message(channel, "\x034[-]\x0F \x02#{name}\x0f disconnected from #{APP_CONFIG['mumble']['server']}")
       end
     end
-
-    mumble.connect
-    puts "[Mumble] Connected to server #{APP_CONFIG['mumble']['server']}"
+    
+    mumble.after_user_remove do
+      mumble.join_channel_with_most_users
+    end
 
     mumble.on_connected do
       mumble.me.mute
       mumble.me.deafen
     end
 
-    sleep(2)
-    mumble.join_channel(APP_CONFIG['mumble']['channel'])
-    puts "[Mumble] Joined channel: #{APP_CONFIG['mumble']['channel']}"
+    mumble.on_server_sync do
+      puts "[Mumble] Connected to server #{APP_CONFIG['mumble']['server']}"
+      mumble.join_channel_with_most_users
+    end
+
+    mumble.connect
   end
 
   @irc_thread.join
