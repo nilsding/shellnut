@@ -116,8 +116,6 @@ def start(irc, mumble)
               irc.send_message(event.channel, "\x02#{prefix_config}#{cmd['command']}\x02 - #{cmd['description']}")
             end
           when 'mumble'
-            require 'pry'
-            binding.pry
             unless content.empty?
               mumble.text_channel(mumble.current_channel, "<b>#{event.from}(#{event.channel}):</b> #{content}".irc_colors)
               puts "[IRC->Mumble] #{event.from}[#{event.channel}]: #{content}"
