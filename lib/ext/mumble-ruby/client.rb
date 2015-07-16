@@ -23,6 +23,12 @@ module Mumble
       join_channel chan_with_most_users[0]
     end
     
+    # Returns the current channel the bot is in.
+    # @return [Mumble::Channel] The current channel.
+    def current_channel
+      channels[me.channel_id]
+    end
+    
     Messages.all_types.each do |msg_type|
       # I needed a way to guarantee that a block runs after a specific callback finished.
       define_method "after_#{msg_type}" do |&block|

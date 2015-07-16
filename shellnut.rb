@@ -49,7 +49,7 @@ def start(irc, mumble)
       $irc_users.each do |user|
         user_msg += "<b>#{user[:nickname]}</b> (#{user[:realname]}) <br/>"
       end
-      mumble.text_channel(APP_CONFIG['mumble']['channel'], user_msg)
+      mumble.text_channel(mumble.current_channel, user_msg)
       user_msg = ""
       $irc_users = []
       $irc_channel = ""
@@ -59,7 +59,7 @@ def start(irc, mumble)
       next unless APP_CONFIG['irc']['announce_joins']
       unless event.from == APP_CONFIG['irc']['nickname']
         puts "[IRC] #{event.from} joined #{event.channel}"
-        mumble.text_channel(APP_CONFIG['mumble']['channel'], "<b>#{event.from}</b> joined #{event.channel}")
+        mumble.text_channel(mumble.current_channel, "<b>#{event.from}</b> joined #{event.channel}")
       end
     end # add_callback 'join'
 
@@ -67,7 +67,7 @@ def start(irc, mumble)
       next unless APP_CONFIG['irc']['announce_joins']
       unless event.from == APP_CONFIG['irc']['nickname']
         puts "[IRC] #{event.from} left #{event.channel}"
-        mumble.text_channel(APP_CONFIG['mumble']['channel'], "<b>#{event.from}</b> left #{event.channel}")
+        mumble.text_channel(mumble.current_channel, "<b>#{event.from}</b> left #{event.channel}")
       end
     end # add_callback 'part'
 
@@ -75,14 +75,14 @@ def start(irc, mumble)
       next unless APP_CONFIG['irc']['announce_joins']
       unless event.from == APP_CONFIG['irc']['nickname']
         puts "[IRC] #{event.from} disconnected from the server"
-        mumble.text_channel(APP_CONFIG['mumble']['channel'], "<b>#{event.from}</b> disconnected from #{APP_CONFIG['irc']['server']}")
+        mumble.text_channel(mumble.current_channel, "<b>#{event.from}</b> disconnected from #{APP_CONFIG['irc']['server']}")
       end
     end # add_callback 'quit'
 
     IRCEvent.add_callback 'nick' do |event|
       next unless APP_CONFIG['irc']['announce_nicks']
       puts "[IRC] #{event.from} is now known as #{event.channel}"
-       mumble.text_channel(APP_CONFIG['mumble']['channel'], "<i>#{event.from}</i> is now known as <b>#{event.channel}</b>")
+       mumble.text_channel(mumble.current_channel, "<i>#{event.from}</i> is now known as <b>#{event.channel}</b>")
     end # add_callback 'nick'
 
     IRCEvent.add_callback 'privmsg' do |event|
@@ -116,8 +116,10 @@ def start(irc, mumble)
               irc.send_message(event.channel, "\x02#{prefix_config}#{cmd['command']}\x02 - #{cmd['description']}")
             end
           when 'mumble'
+            require 'pry'
+            binding.pry
             unless content.empty?
-              mumble.text_channel(APP_CONFIG['mumble']['channel'], "<b>#{event.from}(#{event.channel}):</b> #{content}".irc_colors)
+              mumble.text_channel(mumble.current_channel, "<b>#{event.from}(#{event.channel}):</b> #{content}".irc_colors)
               puts "[IRC->Mumble] #{event.from}[#{event.channel}]: #{content}"
             end
         end
@@ -153,7 +155,7 @@ def start(irc, mumble)
             APP_CONFIG['help'].each do |cmd|
               help_msg += "<b>#{prefix_config}#{cmd['command']}</b> - #{cmd['description']}<br/>"
             end
-            mumble.text_channel(APP_CONFIG['mumble']['channel'], help_msg)
+            mumble.text_channel(mumble.current_channel, help_msg)
           when 'irc'
             mumble_msg = content.gsub(/\s+/m, ' ').split(" ")
             mumble_chl = mumble_msg[0]
