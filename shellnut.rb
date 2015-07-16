@@ -106,7 +106,7 @@ def start(irc, mumble)
                                else
                                  mumble.channels[user[1].channel_id].name
                                end
-                irc.send_message(event.channel, "\x02#{user[1].name.sub("\n", '')}\x02 in \x02#{channel_name} #{"\x034[muted]\x0f" if user[1].self_mute}#{"\x038[deafened]\x0f" if user[1].deafened?}\x02")
+                irc.send_message(event.channel, "\x02#{user[1].name.sub("\n", '')}\x02 in \x02#{channel_name} #{"\x034[muted]\x0f" if user[1].muted?}#{"\x038[deafened]\x0f" if user[1].deafened?}\x02")
               end
             end
           end
