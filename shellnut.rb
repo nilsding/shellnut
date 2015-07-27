@@ -141,6 +141,7 @@ def start(irc, mumble)
     mumble.on_text_message do |msg|
       message = msg.message.gsub(/\s+/m, ' ').strip.split(" ")
       command = message[0]
+      next if command.nil?
       content = message.drop(1).join(" ")
       prefix_config = APP_CONFIG['prefix']
       prefix_current = command.slice!(0)
