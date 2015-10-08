@@ -98,6 +98,7 @@ def start(irc, mumble)
         case command
           when 'users'
           irc.send_message(event.channel, "There are currently #{mumble.users.count - 1} users connected to #{APP_CONFIG['mumble']['server']}")
+          irc.send_message(event.channel, "I'm currently in the channel \x02#{mumble.current_channel.name}\x0f.")
           unless mumble.users.count == 0
             mumble.users.each do |user|
               unless user[1].name == APP_CONFIG['mumble']['username']
