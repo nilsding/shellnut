@@ -3,6 +3,7 @@
 require "rubygems"
 require "IRC"
 require "mumble-ruby"
+require 'twitter'
 
 $LOAD_PATH.unshift File.expand_path './lib', File.dirname(__FILE__)
 
