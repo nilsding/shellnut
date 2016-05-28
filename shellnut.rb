@@ -26,12 +26,23 @@ mumble = Mumble::Client.new(APP_CONFIG['mumble']['server'], APP_CONFIG['mumble']
     conf.username = APP_CONFIG['mumble']['username']
 end
 
+# Optional: Twitter support (only if consumer key is given)
+twitter_client = nil
+unless APP_CONFIG['twitter']['consumer_key'].empty?
+  twitter_client = Twitter::REST::Client.new do |config|
+    config.consumer_key        = APP_CONFIG['twitter']['consumer_key']
+    config.consumer_secret     = APP_CONFIG['twitter']['consumer_secret']
+    config.access_token        = APP_CONFIG['twitter']['access_token']
+    config.access_token_secret = APP_CONFIG['twitter']['access_token_secret']
+  end
+end
+
 irc = IRC.new(APP_CONFIG['irc']['nickname'],
               APP_CONFIG['irc']['server'],
               APP_CONFIG['irc']['port'],
               APP_CONFIG['irc']['realname'])
 
-def start(irc, mumble)
+def start(irc, mumble, twitter_client)
   #IRC
   @irc_thread ||= Thread.new do
     IRCEvent.add_callback('whoreply') do |event|
@@ -175,6 +186,27 @@ def start(irc, mumble)
             else
               mumble.text_user(msg.actor, "Error: Invalid Channel '#{content}'")
             end
+          when 'tweet'
+            if twitter_client.nil?
+              mumble.text_channel(mumble.current_channel, "Error: Twitter support is not enabled.")
+              next
+            end
+            tweet_text = content.strip
+            unless APP_CONFIG['twitter']['hashtag'].strip.empty?
+              tweet_text += " ##{APP_CONFIG['twitter']['hashtag'].strip}"
+            end
+            actual_length = tweet_text.gsub(%r(https?://\S+), 'x' * 23).length
+            if actual_length > 140
+              hashtag_length = APP_CONFIG['twitter']['hashtag'].strip.empty? ? 0 : APP_CONFIG['twitter']['hashtag'].strip.length + 2
+              mumble.text_channel(mumble.current_channel, "Tweet text too long, keep it under #{140 - hashtag_length} characters!"
+              next
+            end
+            begin
+              tweet = twitter_client.update tweet_text
+              mumble.text_channel(mumble.current_channel, "==> <a href=\"#{tweet.url}\">#{tweet.url}</a>"
+            rescue => e
+              mumble.text_channel(mumble.current_channel, "Error: Twitter returned an error -- <font face=\"Comic Sans MS\">#{e.message}</font>")
+            end
         end
       end
     end # on_text_message
@@ -230,4 +262,4 @@ def start(irc, mumble)
   @mumble_thread.join
 end
 
-start(irc, mumble)
+start(irc, mumble, twitter_client)

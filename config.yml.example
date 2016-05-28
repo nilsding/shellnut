@@ -23,6 +23,13 @@ mumble:
 
   announce_joins: yes
 
+twitter:
+  hashtag: 'myMumble'
+  consumer_key: ''
+  consumer_secret: ''
+  access_token: ''
+  access_token_secret: ''
+
 help:
   - command: "mumble"
     description: "Send a message to the Mumble server (from IRC)"
