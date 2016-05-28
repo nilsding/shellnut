@@ -198,12 +198,12 @@ def start(irc, mumble, twitter_client)
             actual_length = tweet_text.gsub(%r(https?://\S+), 'x' * 23).length
             if actual_length > 140
               hashtag_length = APP_CONFIG['twitter']['hashtag'].strip.empty? ? 0 : APP_CONFIG['twitter']['hashtag'].strip.length + 2
-              mumble.text_channel(mumble.current_channel, "Tweet text too long, keep it under #{140 - hashtag_length} characters!"
+              mumble.text_channel(mumble.current_channel, "Tweet text too long, keep it under #{140 - hashtag_length} characters!")
               next
             end
             begin
               tweet = twitter_client.update tweet_text
-              mumble.text_channel(mumble.current_channel, "==> <a href=\"#{tweet.url}\">#{tweet.url}</a>"
+              mumble.text_channel(mumble.current_channel, "==> <a href=\"#{tweet.url}\">#{tweet.url}</a>")
             rescue => e
               mumble.text_channel(mumble.current_channel, "Error: Twitter returned an error -- <font face=\"Comic Sans MS\">#{e.message}</font>")
             end
